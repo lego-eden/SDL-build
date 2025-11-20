@@ -8,16 +8,8 @@ on:
       - main
 
 env:
-  SDL_PARAMS: |
-    -DSDL_TEST_LIBRARY=OFF \
-    -DSDL_TESTS=OFF \
-    -DSDL_EXAMPLES=OFF \
-    -DCMAKE_BUILD_TYPE=Release \
-    -DSDL_SHARED=ON \
-    -DSDL_STATIC=OFF \
-  LINUX_SDL_PARAMS: |
-    -DSDL_DEPS_SHARED=OFF \
-    -DSDL_X11_XTEST=OFF \
+  SDL_PARAMS: -DSDL_TEST_LIBRARY=OFF -DSDL_TESTS=OFF -DSDL_EXAMPLES=OFF -DCMAKE_BUILD_TYPE=Release -DSDL_SHARED=ON -DSDL_STATIC=OFF
+  LINUX_SDL_PARAMS: -DSDL_DEPS_SHARED=OFF -DSDL_X11_XTEST=OFF
 
 
 jobs:
@@ -92,18 +84,22 @@ jobs:
           - ARCH: arm32
             CROSS_ARCH: armhf
             TRIPLET: arm-linux-gnueabihf
+            SDL_ARCH_PARAMS:
           # ----
           - ARCH: arm64
             CROSS_ARCH: arm64
             TRIPLET: aarch64-linux-gnu
+            SDL_ARCH_PARAMS:
           # ----
           - ARCH: ppc64le
             CROSS_ARCH: ppc64el
             TRIPLET: powerpc64le-linux-gnu
+            SDL_ARCH_PARAMS: -DSDL_ALTIVEC=OFF
           # ----
           - ARCH: riscv64
             CROSS_ARCH: riscv64
             TRIPLET: riscv64-linux-gnu
+            SDL_ARCH_PARAMS:
     env:
       LWJGL_ARCH: ${{matrix.ARCH}}
     defaults:
@@ -155,7 +151,7 @@ jobs:
             libdecor-0-dev:${{matrix.CROSS_ARCH}} \
             liburing-dev:${{matrix.CROSS_ARCH}}
       - name: Configure build
-        run: PKG_CONFIG_PATH=${PKG_CONFIG_PATH}:${CMAKE_SYSROOT}/usr/lib/${{matrix.TRIPLET}}/pkgconfig CC=${{matrix.TRIPLET}}-gcc cmake -B build $SDL_PARAMS $LINUX_SDL_PARAMS -DCMAKE_C_FLAGS="-std=c99 -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=0"
+        run: PKG_CONFIG_PATH=${PKG_CONFIG_PATH}:${CMAKE_SYSROOT}/usr/lib/${{matrix.TRIPLET}}/pkgconfig CC=${{matrix.TRIPLET}}-gcc cmake -B build $SDL_PARAMS $LINUX_SDL_PARAMS ${{matrix.SDL_ARCH_PARAMS}} -DCMAKE_C_FLAGS="-std=c99 -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=0"
       - name: Build
         run: |
           cmake --build build --parallel
