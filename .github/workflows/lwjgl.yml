@@ -1,5 +1,4 @@
-name: Bearlyb Build
-# This file is basically copied from the LWJGL-CI repo for building SDL
+name: LWJGL Build
 
 on:
   workflow_dispatch:
@@ -8,17 +7,8 @@ on:
       - main
 
 env:
-  SDL_PARAMS: |
-    -DSDL_TEST_LIBRARY=OFF \
-    -DSDL_TESTS=OFF \
-    -DSDL_EXAMPLES=OFF \
-    -DCMAKE_BUILD_TYPE=Release \
-    -DSDL_SHARED=ON \
-    -DSDL_STATIC=OFF \
-  LINUX_SDL_PARAMS: |
-    -DSDL_DEPS_SHARED=OFF \
-    -DSDL_X11_XTEST=OFF \
-
+  S3_PARAMS: --cache-control "public,must-revalidate,proxy-revalidate,max-age=0"
+  SDL_PARAMS: -DSDL_TEST_LIBRARY=OFF -DSDL_TESTS=OFF -DSDL_EXAMPLES=OFF -DDSDL_DISABLE_INSTALL=ON -DCMAKE_BUILD_TYPE=Release
 
 jobs:
   linux:
@@ -74,7 +64,7 @@ jobs:
             libdecor-0-dev \
             liburing-dev
       - name: Configure build
-        run: cmake -B build $SDL_PARAMS $LINUX_SDL_PARAMS -DCMAKE_C_FLAGS="-std=c99 -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=0"
+        run: cmake -B build $SDL_PARAMS -DCMAKE_C_FLAGS="-std=c99 -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=0"
       - name: Build
         run: |
           cmake --build build --parallel
@@ -155,7 +145,7 @@ jobs:
             libdecor-0-dev:${{matrix.CROSS_ARCH}} \
             liburing-dev:${{matrix.CROSS_ARCH}}
       - name: Configure build
-        run: PKG_CONFIG_PATH=${PKG_CONFIG_PATH}:${CMAKE_SYSROOT}/usr/lib/${{matrix.TRIPLET}}/pkgconfig CC=${{matrix.TRIPLET}}-gcc cmake -B build $SDL_PARAMS $LINUX_SDL_PARAMS -DCMAKE_C_FLAGS="-std=c99 -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=0"
+        run: PKG_CONFIG_PATH=${PKG_CONFIG_PATH}:${CMAKE_SYSROOT}/usr/lib/${{matrix.TRIPLET}}/pkgconfig CC=${{matrix.TRIPLET}}-gcc cmake -B build $SDL_PARAMS -DCMAKE_C_FLAGS="-std=c99 -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=0"
       - name: Build
         run: |
           cmake --build build --parallel
@@ -218,7 +208,7 @@ jobs:
         ARCH: [x64, arm64]
         include:
           - ARCH: x64
-            CMAKE_PARAMS: -DCMAKE_OSX_DEPLOYMENT_TARGET=10.13 -DCMAKE_OSX_ARCHITECTURES=x86_64
+            CMAKE_PARAMS: -DCMAKE_OSX_DEPLOYMENT_TARGET=10.11 -DCMAKE_OSX_ARCHITECTURES=x86_64
           - ARCH: arm64
             CMAKE_PARAMS: -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0 -DCMAKE_OSX_ARCHITECTURES=arm64
     steps:
